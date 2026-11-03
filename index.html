@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HHsim — Hodgkin-Huxley Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="appbar">
+    HHsim Hodgkin-Huxley Simulator
+  </header>
+
+  <nav class="toolbar">
+    <button class="panel-button" data-dialog="membrane"><span></span>Membrane</button>
+    <button class="panel-button" data-dialog="channels"><span></span>Channels</button>
+    <button id="protocolPanelButton" class="panel-button" data-dialog="stimuli"><span></span>Stimuli</button>
+    <button class="panel-button" data-dialog="drugs"><span></span>Drugs</button>
+    <div class="toolbar-space"></div>
+    <button class="mode-button active" data-mode="cursor">Cursor</button>
+    <button class="mode-button" data-mode="zoom">Zoom</button>
+    <button class="mode-button" data-mode="pan">Pan</button>
+    <button id="help" class="help-button" title="Open the official HHsim documentation">?</button>
+  </nav>
+
+  <main>
+    <section class="voltage-plot"><canvas id="voltageChart"></canvas></section>
+    <section class="signal-plot"><div id="signalKey" class="signal-key" aria-label="Selected variable key"></div><canvas id="signalChart"></canvas></section>
+
+    <div class="time-slider">
+      <button id="timelineBack" class="timeline-arrow" type="button" aria-label="Pan timeline left">◀</button>
+      <div id="timeTrack" class="time-track">
+        <div id="timeViewport" class="time-viewport" aria-hidden="true"><span class="time-handle"></span></div>
+        <input id="timeWindow" type="range" min="0" max="60" value="60" aria-label="Timeline position">
+      </div>
+      <button id="timelineForward" class="timeline-arrow" type="button" aria-label="Pan timeline right">▶</button>
+    </div>
+    <div id="clampStatus" class="clamp-status" hidden>
+      <span id="clampParameter">Step 1 voltage (mV): −40</span>
+      <span>Click on any of the lines above to set the cursor and measure the value at that point.</span>
+    </div>
+
+    <section class="signal-panel">
+      <strong>High value:</strong>
+      <label class="signal first-signal"><output id="naHigh">1</output><select id="signal1"><option value="m">m</option><option value="h">h</option><option value="n">n</option><option value="iNa">I_Na (µA)</option><option value="iK">I_K (µA)</option><option value="gNa">g_Na (µS)</option><option value="gK">g_K (µS)</option><option value="iLeak">I_leak (µA)</option><option value="p">p (user chan)</option><option value="q">q (user chan)</option><option value="iUser">I_user (µA)</option><option value="gUser">g_user (µS)</option><option value="blank">blank</option></select></label>
+      <label class="signal second-signal"><output id="kHigh">1</output><select id="signal2"><option value="h">h</option><option value="m">m</option><option value="n">n</option><option value="iNa">I_Na (µA)</option><option value="iK">I_K (µA)</option><option value="gNa">g_Na (µS)</option><option value="gK">g_K (µS)</option><option value="iLeak">I_leak (µA)</option><option value="p">p (user chan)</option><option value="q">q (user chan)</option><option value="iUser">I_user (µA)</option><option value="gUser">g_user (µS)</option><option value="blank">blank</option></select></label>
+      <label class="signal third-signal"><output id="leakHigh">1</output><select id="signal3"><option value="n">n</option><option value="m">m</option><option value="h">h</option><option value="iNa">I_Na (µA)</option><option value="iK">I_K (µA)</option><option value="gNa">g_Na (µS)</option><option value="gK">g_K (µS)</option><option value="iLeak">I_leak (µA)</option><option value="p">p (user chan)</option><option value="q">q (user chan)</option><option value="iUser">I_user (µA)</option><option value="gUser">g_user (µS)</option><option value="blank">blank</option></select></label>
+      <strong>Low value:</strong>
+      <output class="first-signal" id="naLow">0</output>
+      <output class="second-signal" id="kLow">0</output>
+      <output class="third-signal" id="leakLow">0</output>
+      <aside id="readout">Click any line to set the cursor and measure that point.</aside>
+    </section>
+
+    <p id="hint" hidden aria-live="polite"></p>
+    <aside id="cursorPopup" class="cursor-popup" hidden aria-live="polite">
+      <button id="closeCursorPopup" aria-label="Close value readout">×</button>
+      <div class="cursor-values">
+        <button id="cursorVar" type="button" title="Move cursor to a different line">var</button>
+        <output id="cursorPopupValue">—</output>
+        <output id="cursorPopupTime">—</output>
+      </div>
+      <div id="cursorPopupLabel" class="cursor-label">—</div>
+      <div class="cursor-actions">
+        <button id="cursorFarLeft" type="button" title="Move to previous maximum or minimum">&lt;&lt;</button>
+        <button id="cursorLeft" type="button" title="Move left one sample">&lt;</button>
+        <button id="cursorRight" type="button" title="Move right one sample">&gt;</button>
+        <button id="cursorFarRight" type="button" title="Move to next maximum or minimum">&gt;&gt;</button>
+        <button id="cursorSave" type="button" title="Save this simulation state for Recall">Save</button>
+      </div>
+    </aside>
+    <aside id="zoomHint" class="zoom-hint" hidden>
+      Left-click to zoom in. Shift-click to zoom out.<br>Right-click for more options. Click and drag to select a zoom box.
+    </aside>
+    <aside id="panHint" class="zoom-hint" hidden>Click and drag to pan.</aside>
+    <menu id="zoomMenu" class="zoom-menu" hidden aria-label="Zoom options">
+      <button type="button" data-zoom-action="out">Zoom Out <span>Shift-Click</span></button>
+      <button type="button" data-zoom-action="reset">Reset to Original View</button>
+      <hr>
+      <button type="button" data-zoom-constraint="unconstrained"><b>✓</b> Unconstrained Zoom</button>
+      <button type="button" data-zoom-constraint="horizontal"><b></b> Horizontal Zoom</button>
+      <button type="button" data-zoom-constraint="vertical"><b></b> Vertical Zoom</button>
+    </menu>
+
+    <footer>
+      <button id="stim1" class="stim-button">Stim1</button>
+      <button id="stim2" class="stim-button">Stim2</button>
+      <button id="run" class="run">Run</button>
+      <button id="nudge" class="nudge">Nudge</button>
+      <button id="stop" class="stop">Stop</button>
+      <button id="print">Print</button>
+      <button id="export">Export</button>
+      <button id="clear">Clear</button>
+      <button id="recall">Recall</button>
+      <select id="record" aria-label="Recording mode">
+        <option value="voltage">Voltage Recording</option>
+        <option value="clamp">Voltage Clamp</option>
+      </select>
+    </footer>
+  </main>
+
+  <dialog id="membrane" class="sidebar-dialog membrane-sidebar">
+    <div class="dialog-title">Membrane<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="membrane-heading">Membrane</h1>
+      <div class="ion-grid hhsim-grid">
+        <div></div><b>C<sub>in</sub> (mM)</b><b>C<sub>out</sub> (mM)</b><b>E<sub>ion</sub></b>
+        <label>Na<sup>+</sup></label><input class="number concentration" id="nai" type="number" value="50" step="1"><input class="number concentration" id="nao" type="number" value="440" step="1"><output id="ena">52.4 mV</output>
+        <label>K<sup>+</sup></label><input class="number concentration" id="ki" type="number" value="400" step="1"><input class="number concentration" id="ko" type="number" value="20" step="1"><output id="ek">−72.1 mV</output>
+        <label>Cl<sup>−</sup></label><input class="number concentration" id="cli" type="number" value="52" step="1"><input class="number concentration" id="clo" type="number" value="560" step="1"><output id="ecl">−57.2 mV</output>
+      </div>
+      <div class="two-column">
+        <label class="setting-control"><span>T (°C)</span><input class="number" id="temperature" type="number" value="6.3" step="0.1"></label>
+        <p class="setting-text passive-setting"><span>passive V<sub>r</sub> =</span><strong id="restingPotential">−47.8 mV</strong></p>
+        <p class="setting-text fixed-rm"><span class="subscript-symbol">R<sub>m</sub> =</span><strong>5.1 MΩ</strong></p>
+        <label class="setting-control cm-control"><span class="subscript-symbol">C<sub>m</sub> (nF)</span><input class="number" id="cm" type="number" value="1" step="0.1"></label>
+      </div>
+      <div class="panel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="channels" class="sidebar-dialog channels-sidebar">
+    <div class="dialog-title">Channels<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="channels-heading">Channels</h1>
+      <div class="channels-grid">
+        <label><input id="passiveNa" type="checkbox" checked>passive g<sub>Na</sub> (µS)</label><input class="number" id="gNaLeak" type="number" value="0.0265" step="0.0001">
+        <label><input id="passiveK" type="checkbox" checked>passive g<sub>K</sub> (µS)</label><input class="number" id="gKLeak" type="number" value="0.0700" step="0.0001">
+        <label><input id="passiveCl" type="checkbox" checked>passive g<sub>Cl</sub> (µS)</label><input class="number" id="gClLeak" type="number" value="0.1000" step="0.0001">
+        <label><input id="fastNa" type="checkbox" checked>Fast Sodium</label><button class="details" data-dialog="fastSodiumDetails">Details</button>
+        <label><input id="delayedK" type="checkbox" checked>Delayed Rectifier</label><button class="details" data-dialog="delayedKDetails">Details</button>
+        <label><input id="userChannel" type="checkbox">User Channel</label><button class="details" data-dialog="userChannelDetails">Details</button>
+      </div>
+      <div class="panel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="fastSodiumDetails" class="channel-details">
+    <div class="dialog-title">Fast Sodium<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="channel-heading">Fast Sodium</h1>
+      <div class="channel-top-row"><label>Ion<select id="naIon"><option value="na">Na⁺</option><option value="k">K⁺</option><option value="cl">Cl⁻</option></select></label><label class="gmax-label"><span>g<sub>max</sub> (µS)</span><input id="naGmax" class="number channel-param" type="number" value="120" step="1"></label></div>
+      <div class="gate-columns">
+        <section class="gate-section" data-gate="m"><h2>m: <span>activation</span></h2><label>exponent<input id="mExponent" class="number channel-param" type="number" value="3" min="0" step="1"></label><div class="rate-block alpha"><h3>alpha: <span>Closed → Open</span></h3><label>function<select id="mAlphaForm" class="rate-form"><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="mAlphaC" class="number channel-param" type="number" value="0.1" step="0.001"></label><label>threshold (th)<input id="mAlphaTh" class="number channel-param" type="number" value="-40" step="1"></label><label>slope (s)<input id="mAlphaS" class="number channel-param" type="number" value="-0.1" step="0.001"></label></div></div><div class="rate-block beta"><h3>beta: <span>Open → Closed</span></h3><label>function<select id="mBetaForm" class="rate-form"><option value="exp">c · exp[(V−th)·s]</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="mBetaC" class="number channel-param" type="number" value="4" step="0.001"></label><label>threshold (th)<input id="mBetaTh" class="number channel-param" type="number" value="-65" step="1"></label><label>slope (s)<input id="mBetaS" class="number channel-param" type="number" value="-0.0556" step="0.0001"></label></div></div><div class="rate-chart"><canvas id="mRateChart"></canvas></div></section>
+        <section class="gate-section" data-gate="h"><h2>h: <span>inactivation</span></h2><label>exponent<input id="hExponent" class="number channel-param" type="number" value="1" min="0" step="1"></label><div class="rate-block alpha"><h3>alpha: <span>Closed → Open</span></h3><label>function<select id="hAlphaForm" class="rate-form"><option value="exp">c · exp[(V−th)·s]</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="hAlphaC" class="number channel-param" type="number" value="0.07" step="0.001"></label><label>threshold (th)<input id="hAlphaTh" class="number channel-param" type="number" value="-65" step="1"></label><label>slope (s)<input id="hAlphaS" class="number channel-param" type="number" value="-0.05" step="0.001"></label></div></div><div class="rate-block beta"><h3>beta: <span>Open → Closed</span></h3><label>function<select id="hBetaForm" class="rate-form"><option value="sigmoid">c / (1+exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="hBetaC" class="number channel-param" type="number" value="1" step="0.001"></label><label>threshold (th)<input id="hBetaTh" class="number channel-param" type="number" value="-35" step="1"></label><label>slope (s)<input id="hBetaS" class="number channel-param" type="number" value="-0.1" step="0.001"></label></div></div><div class="rate-chart"><canvas id="hRateChart"></canvas></div></section>
+      </div>
+      <div class="panel-footer channel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="userChannelDetails" class="channel-details user-details">
+    <div class="dialog-title">User Channel<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="channel-heading">User Channel</h1>
+      <div class="user-top-row">
+        <label>Ion<select id="userIon"><option value="na">Na⁺</option><option value="k">K⁺</option><option value="cl">Cl⁻</option><option value="none" selected>--</option></select></label>
+        <label class="gmax-label"><span>g<sub>max</sub> (µS)</span><input id="userGmax" class="number channel-param" type="number" value="0" min="0" step="0.1"></label>
+        <label>copy parameters from<select id="copyUserParameters"><option value="none">--</option><option value="fast">Fast Sodium</option><option value="delayed">Delayed Rectifier</option></select></label>
+      </div>
+      <div class="gate-columns">
+        <section class="gate-section" data-gate="p">
+          <h2>p: <span>activation</span></h2><label>exponent<input id="pExponent" class="number channel-param" type="number" value="1" min="0" step="1"></label>
+          <div class="rate-block alpha"><h3>alpha: <span>Closed → Open</span></h3><label>function<select id="pAlphaForm" class="rate-form"><option value="none" selected>--</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="pAlphaC" class="number channel-param" type="number" value="0" step="0.01"></label><label>threshold (th)<input id="pAlphaTh" class="number channel-param" type="number" value="0" step="1"></label><label>slope (s)<input id="pAlphaS" class="number channel-param" type="number" value="0" step="0.01"></label></div></div>
+          <div class="rate-block beta"><h3>beta: <span>Open → Closed</span></h3><label>function<select id="pBetaForm" class="rate-form"><option value="none" selected>--</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="pBetaC" class="number channel-param" type="number" value="0" step="0.01"></label><label>threshold (th)<input id="pBetaTh" class="number channel-param" type="number" value="0" step="1"></label><label>slope (s)<input id="pBetaS" class="number channel-param" type="number" value="0" step="0.01"></label></div></div>
+          <div class="rate-chart"><canvas id="pRateChart"></canvas></div>
+        </section>
+        <section class="gate-section" data-gate="q">
+          <h2>q: <span>inactivation</span></h2><label>exponent<input id="qExponent" class="number channel-param" type="number" value="1" min="0" step="1"></label>
+          <div class="rate-block alpha"><h3>alpha: <span>Closed → Open</span></h3><label>function<select id="qAlphaForm" class="rate-form"><option value="none" selected>--</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="qAlphaC" class="number channel-param" type="number" value="0" step="0.01"></label><label>threshold (th)<input id="qAlphaTh" class="number channel-param" type="number" value="0" step="1"></label><label>slope (s)<input id="qAlphaS" class="number channel-param" type="number" value="0" step="0.01"></label></div></div>
+          <div class="rate-block beta"><h3>beta: <span>Open → Closed</span></h3><label>function<select id="qBetaForm" class="rate-form"><option value="none" selected>--</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="qBetaC" class="number channel-param" type="number" value="0" step="0.01"></label><label>threshold (th)<input id="qBetaTh" class="number channel-param" type="number" value="0" step="1"></label><label>slope (s)<input id="qBetaS" class="number channel-param" type="number" value="0" step="0.01"></label></div></div>
+          <div class="rate-chart"><canvas id="qRateChart"></canvas></div>
+        </section>
+      </div>
+      <div class="panel-footer channel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="delayedKDetails" class="channel-details delayed-details">
+    <div class="dialog-title">Delayed Rectifier<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="channel-heading delayed-heading">Delayed Rectifier</h1>
+      <div class="channel-top-row"><label>Ion<select id="kIon"><option value="k">K⁺</option><option value="na">Na⁺</option><option value="cl">Cl⁻</option></select></label><label class="gmax-label"><span>g<sub>max</sub> (µS)</span><input id="kGmax" class="number channel-param" type="number" value="36" step="1"></label></div>
+      <section class="gate-section delayed-gate" data-gate="n"><h2>n: <span>activation</span></h2><label>exponent<input id="nExponent" class="number channel-param" type="number" value="4" min="0" step="1"></label><div class="rate-block alpha"><h3>alpha: <span>Closed → Open</span></h3><label>function<select id="nAlphaForm" class="rate-form"><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="exp">c · exp[(V−th)·s]</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="nAlphaC" class="number channel-param" type="number" value="0.01" step="0.001"></label><label>threshold (th)<input id="nAlphaTh" class="number channel-param" type="number" value="-55" step="1"></label><label>slope (s)<input id="nAlphaS" class="number channel-param" type="number" value="-0.1" step="0.001"></label></div></div><div class="rate-block beta"><h3>beta: <span>Open → Closed</span></h3><label>function<select id="nBetaForm" class="rate-form"><option value="exp">c · exp[(V−th)·s]</option><option value="linear">c · (V−th) / (1−exp[(V−th)·s])</option><option value="sigmoid">c / (1+exp[(V−th)·s])</option></select></label><div class="rate-values"><label>magnitude (c)<input id="nBetaC" class="number channel-param" type="number" value="0.125" step="0.001"></label><label>threshold (th)<input id="nBetaTh" class="number channel-param" type="number" value="-65" step="1"></label><label>slope (s)<input id="nBetaS" class="number channel-param" type="number" value="-0.0125" step="0.0001"></label></div></div><div class="rate-chart"><canvas id="nRateChart"></canvas></div></section>
+      <div class="panel-footer channel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="stimuli">
+    <div class="dialog-title">Stimuli<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="stimuli-heading">Stimulus Patterns</h1>
+      <div class="stimulus-cards">
+        <section class="stimulus-card"><h2>Stim1 Button</h2><div class="small-chart"><canvas id="stimChart1"></canvas></div><div id="stimControls1" class="pulse-controls"></div></section>
+        <section class="stimulus-card"><h2>Stim2 Button</h2><div class="small-chart"><canvas id="stimChart2"></canvas></div><div id="stimControls2" class="pulse-controls"></div></section>
+      </div>
+      <div class="panel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="drugs" class="drugs-dialog">
+    <div class="dialog-title">Drugs<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="drugs-heading">Drugs</h1>
+      <section class="drug" id="ttxDrug"><h2>TTX (tetrodotoxin) — inhibits Na current</h2><div class="drug-chart"><canvas id="ttxChart"></canvas><button class="apply-drug" data-drug="ttx"><span>click here to apply drug</span></button></div><label><input class="number" id="ttx" type="number" min="0" max="100" value="0" step="1"> % inhibition</label></section>
+      <section class="drug" id="teaDrug"><h2>TEA (tetraethylammonium) — inhibits K current</h2><div class="drug-chart"><canvas id="teaChart"></canvas><button class="apply-drug" data-drug="tea"><span>click here to apply drug</span></button></div><label><input class="number" id="tea" type="number" min="0" max="100" value="0" step="1"> % inhibition</label></section>
+      <section class="pronase"><h2>Pronase — eliminates Na inactivation</h2><label><input id="pronase" type="checkbox"> Pronase</label></section>
+      <div class="panel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="voltageClamp" class="voltage-clamp-dialog">
+    <div class="dialog-title">Voltage Clamp<button class="close">×</button></div>
+    <div class="dialog-content">
+      <h1 class="voltage-clamp-heading">Voltage Clamp Protocol</h1>
+      <h2>Voltage shape</h2>
+      <div class="vc-protocol-chart"><canvas id="vcProtocolChart"></canvas></div>
+      <div id="vcControls" class="vc-controls" aria-label="Voltage clamp protocol controls"></div>
+      <p class="vc-var-note">(*) Parameter varied in text box below</p>
+      <label class="vc-var-input"><span id="vcParameterLabel">Step 1 voltage (mV):</span><input id="vcVarValues" class="number" type="text" value="-40" inputmode="decimal" aria-label="Voltage clamp values to run"></label>
+      <div class="panel-footer"><button class="reset-panel">Reset</button><button class="hide-panel">Hide</button></div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

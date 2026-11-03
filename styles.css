@@ -1,0 +1,920 @@
+:root {
+  --background: #050506;
+  --grid: rgba(220, 225, 235, 0.2);
+  --cyan: #00c7ce;
+  --green: #12d61d;
+  --yellow: #e7e800;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 980px; background: var(--background); color: #f1f2f5; font: 16px Arial, sans-serif; }
+button { cursor: pointer; font: inherit; }
+.appbar { position: relative; display: grid; place-items: center; height: 52px; background: transparent; color: #fff; font-size: 27px; font-weight: 700; }
+.toolbar { display: flex; gap: 5px; align-items: center; height: 56px; padding: 0 10px; border-bottom: 1px solid #282a2e; }
+.panel-button, .mode-button, .help-button { height: 42px; background: #f2f2f2; color: #202124; border: 2px solid #161616; }
+.panel-button { min-width: 155px; }.panel-button span { display: inline-grid; width: 22px; height: 22px; margin-right: 10px; vertical-align: middle; place-items: center; background: white; border: 1px solid #cfd3d6; border-radius: 6px; font-size: 18px; font-weight: 700; line-height: 1; }
+.panel-button.panel-open span { background: #139fec; border-color: #0879c4; color: #fff; }
+.panel-button.panel-open span::after { content: "✓"; }
+.panel-button.has-changes { background: #fff800; }
+.toolbar-space { flex: 1; }.mode-button { min-width: 116px; border: 3px solid #843a3d; }.mode-button.active { color: #f02026; }.help-button { width: 45px; font-size: 22px; font-weight: 700; }
+main { max-width: 1450px; margin: auto; padding: 24px 28px 6px; }.voltage-plot { height: calc((100vh - 390px) * .55); min-height: 260px; }.signal-plot { position: relative; height: calc((100vh - 390px) * .45); min-height: 205px; margin-top: 8px; }.signal-key { position: absolute; z-index: 2; top: 34px; left: 8px; display: grid; gap: 13px; width: 62px; font-weight: 700; pointer-events: none; }.signal-key span { font-size: 14px; }
+.time-slider { display: flex; gap: 10px; align-items: center; margin: 12px 38px 10px; }.time-slider input { width: 100%; }
+.signal-panel { display: grid; grid-template-columns: 170px repeat(3, 170px) minmax(290px, 1fr); gap: 12px; align-items: end; }.signal output, .signal-panel > output { display: block; margin-bottom: 4px; font-size: 18px; font-weight: 700; }.signal select { width: 100%; padding: 8px; }.signal-panel #readout { grid-column: 5; grid-row: 1 / span 2; }
+.sodium { color: var(--green); }.potassium { color: #00d409; }.leak { color: var(--cyan); }
+#readout { align-self: stretch; padding: 12px 20px; background: #601317; border: 1px solid #912a30; text-align: center; line-height: 1.35; }
+#hint { display: none; } footer { display: flex; gap: 8px; align-items: center; padding-bottom: 15px; } footer button { min-width: 86px; padding: 10px 16px; border: 2px solid #333; background: #f4f4f4; font-weight: 700; }.stim-button, .stim-button.active { outline: 0; background: #8c8eee; }.run { margin-left: auto; background: #11dc37; }.nudge { background: #d6cf44; }.stop { background: #ff5959; }.record { margin-left: auto; }
+dialog { position: fixed; top: 72px; left: 28px; width: min(920px, 94vw); max-height: 86vh; margin: 0; padding: 0; overflow: auto; background: #000; color: #eceef1; border: 1px solid #6c7078; box-shadow: 0 14px 45px #000b; } dialog::backdrop { background: transparent; }.dialog-title { position: sticky; top: 0; z-index: 1; padding: 12px 50px; background: #f0f1f2; color: #454649; text-align: center; font-size: 26px; font-weight: 700; cursor: move; user-select: none; }.close { position: absolute; top: 8px; right: 10px; border: 0; background: transparent; font-size: 27px; }.dialog-content { padding: 22px 38px 28px; }.dialog-content h1 { margin: 0 0 22px; text-align: center; font-size: 39px; }.membrane-heading { color: #ff1630; }.channels-heading { color: #00df1c; }.stimuli-heading { color: #9694ff; }.drugs-heading, .drug h2, .pronase h2 { color: var(--yellow); }
+.ion-grid { display: grid; grid-template-columns: 110px 1fr 1fr 1fr; gap: 12px 16px; align-items: center; font-size: 19px; }.ion-grid b { text-align: center; }.number { width: 100%; padding: 7px; background: #020202; color: #e9ed00; border: 2px solid #cbd0d5; text-align: right; font: 700 17px Arial, sans-serif; }.two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 30px 45px; margin-top: 45px; }.two-column label { display: grid; gap: 7px; }.channels-grid { display: grid; grid-template-columns: 1fr 150px; gap: 12px 18px; align-items: center; font-size: 20px; }.channels-grid label { display: flex; gap: 12px; align-items: center; }.channels-grid input[type=checkbox] { width: 30px; height: 30px; accent-color: #00b8ff; }.details { padding: 8px; }
+.stimulus-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }.stimulus-cards section { padding: 16px; border: 1px solid #383b43; }.stimulus-cards h2 { margin: 0 0 14px; color: #9694ff; text-align: center; font-size: 20px; }.small-chart, .drug-chart { height: 190px; }.pulse-controls { display: grid; grid-template-columns: 1fr 42px 1fr 1fr 42px 1fr; gap: 10px; align-items: end; margin-top: 14px; }.slider-control { display: grid; gap: 6px; text-align: center; color: var(--yellow); font-weight: 700; }.slider-control output { min-height: 34px; padding: 6px; border: 2px solid #cbd0d5; background: #020202; }.slider-control input[type=range] { width: 100%; accent-color: #7678d6; }.slider-control.vertical { grid-template-rows: auto 120px; }.slider-control.vertical input[type=range] { width: 120px; height: 24px; transform: rotate(-90deg) translateX(-48px); transform-origin: 12px 12px; }.drug { margin-bottom: 34px; }.drug h2, .pronase h2 { text-align: center; font-size: 20px; }.drug > label { display: flex; gap: 10px; align-items: center; }.pronase { min-height: 145px; border: 2px solid #c8cbd0; text-align: center; }.pronase label { display: inline-block; margin-top: 48px; padding: 11px 42px; background: #c8c8ca; color: #222; }
+.cursor-popup { position: fixed; z-index: 20; right: 28px; bottom: 70px; width: 420px; min-height: 140px; padding: 17px 12px 10px; background: #65161a; border: 1px solid #a22b32; color: #fff; font-weight: 700; line-height: 1.25; box-shadow: 0 8px 28px #0009; }
+.cursor-popup > #closeCursorPopup { position: absolute; top: 3px; right: 7px; width: 18px; padding: 0; border: 0; background: transparent; color: #fff; font-size: 17px; line-height: 17px; }
+.cursor-values { display: grid; grid-template-columns: 60px 1fr 1fr; gap: 9px; padding-right: 20px; }
+.cursor-values output { display: grid; min-height: 31px; place-items: center; padding: 4px 7px; background: #030303; color: #fff; font-size: 16px; white-space: nowrap; }
+.cursor-values #cursorPopupValue { background: var(--cursor-color, #ff787e); color: #151515; }
+.cursor-values #cursorVar, .cursor-actions button { position: static; min-width: 0; border: 1px solid #c2c5c9; background: #f5f5f5; color: #222; font-size: 15px; }
+.cursor-values #cursorVar { height: 31px; }
+.cursor-label { min-height: 27px; padding: 8px 20px 2px; color: var(--cursor-color, #ff8085); text-align: center; font-size: 15px; }
+.cursor-actions { display: flex; justify-content: center; gap: 8px; margin-top: 5px; }
+.cursor-actions button { height: 30px; min-width: 38px; padding: 3px 8px; }
+.cursor-actions #cursorSave { min-width: 66px; margin-left: 42px; }
+
+/* HHsim-style side panels and compact click steppers. */
+.sidebar-dialog { width: 540px; max-height: 680px; }.sidebar-dialog .dialog-content { padding: 22px 48px 38px; }.sidebar-dialog .dialog-title { font-size: 22px; }.sidebar-dialog .dialog-content h1 { font-size: 38px; }.hhsim-grid { grid-template-columns: 92px 1fr 1fr 1fr; gap: 14px 13px; font-size: 18px; }.hhsim-grid label { font-weight: 700; }.hhsim-grid output { white-space: nowrap; font-weight: 700; }.two-column { display: grid; width: 360px; grid-template-columns: 160px 141px 59px; gap: 21px 0; margin: 42px auto 0; }.two-column .setting-control, .two-column .setting-text { grid-column: 1 / -1; display: grid; grid-template-columns: 160px 141px 59px; align-items: center; margin: 0; font-size: 18px; }.two-column .setting-control > span, .two-column .setting-text > span { grid-column: 1; justify-self: start; }.two-column .setting-control .stepper { grid-column: 2; }.two-column .setting-text strong { grid-column: 2; justify-self: center; white-space: nowrap; }.channels-sidebar { width: 530px; }.channels-sidebar .dialog-content { padding: 22px 30px 42px; }.channels-grid { grid-template-columns: 1fr 158px; gap: 10px 18px; font-size: 21px; }.channels-grid .details { min-height: 38px; border: 1px solid #a8a8a8; background: #efefef; color: #222; }.channels-grid input[type=checkbox] { accent-color: #0aa9f5; }.number { appearance: textfield; min-width: 0; }.number::-webkit-outer-spin-button, .number::-webkit-inner-spin-button { appearance: none; margin: 0; }
+.stepper { display: grid; grid-template-columns: minmax(0, 1fr) 29px; width: 100%; }.stepper .number { grid-column: 1; grid-row: 1 / span 2; padding-right: 4px; }.stepper button { grid-column: 2; width: 29px; min-width: 0; padding: 0; background: #090909; color: #1ba7ff; border: 2px solid #1ba7ff; font-weight: 700; font-size: 14px; line-height: 16px; }.stepper .step-up { grid-row: 1; border-bottom: 0; }.stepper .step-down { grid-row: 2; border-top: 0; color: #f34e5c; }.hhsim-grid .stepper, .channels-grid .stepper { height: 36px; }.hhsim-grid .number, .channels-grid .number { height: 36px; }
+.channel-details { width: min(930px, 94vw); max-height: 86vh; }.channel-details .dialog-content { padding: 16px 32px 26px; }.channel-heading { color: var(--yellow); text-align: left !important; font-size: 31px !important; }.delayed-heading { color: #dce000; }.channel-top-row { grid-template-columns: 170px 190px; gap: 28px; max-width: 430px; margin: 15px auto 25px; font-size: 17px; }.channel-top-row label, .gate-section > label { display: grid; gap: 5px; }.channel-top-row select, .rate-block select { min-height: 32px; padding: 4px 8px; color: #111; background: #fff; border-radius: 5px; font-weight: 700; }.gate-columns { gap: 30px; }.gate-section h2 { margin: 0 0 10px; font-size: 20px; }.gate-section > label { max-width: 120px; margin-bottom: 10px; }.rate-block { margin: 12px 0 19px; }.rate-block h3 { margin: 0 0 7px; font-size: 17px; }.rate-block > label { gap: 5px; color: #ddd; }.rate-values { gap: 5px; margin: 8px 0 0; }.rate-values label { grid-template-columns: 1fr 112px; gap: 8px; font-size: 15px; }.rate-values .stepper { height: 31px; }.rate-chart { height: 170px; padding: 4px; }.delayed-details { width: 500px; }.delayed-details .delayed-gate { max-width: 370px; }.delayed-details .channel-top-row { margin-left: 0; }.channel-details .number { height: 31px; }.channel-details .stepper button { font-size: 11px; line-height: 13px; }
+.panel-footer { display: flex; gap: 18px; margin-top: 34px; }.panel-footer button { min-width: 78px; padding: 9px 15px; border: 1px solid #aaa; background: #f0f0f0; color: #222; }
+.subscript-symbol { display: inline-block; white-space: nowrap; }.subscript-symbol sub { position: relative; bottom: -0.28em; font-size: .66em; line-height: 0; vertical-align: baseline; }
+
+/* Final MATLAB-style membrane and Fast Sodium refinements. */
+.membrane-sidebar .stepper { grid-template-columns: minmax(0, 1fr) 21px; }
+.membrane-sidebar .stepper button { width: 21px; border: 0; background: transparent; padding: 0; line-height: 14px; }
+.membrane-sidebar .stepper .step-up { border: 0; color: #1ba7ff; }
+.membrane-sidebar .stepper .step-down { border: 0; color: #f34e5c; }
+.membrane-sidebar .two-column { gap: 16px 0; margin-top: 34px; }
+.number.changed, .channel-details select.changed { background: #74171b; color: #fff400; border-color: #e14c55; }
+.membrane-sidebar input.changed { background: #74171b; }
+.channel-details { width: min(970px, 94vw); }
+.channel-details .dialog-content { padding: 16px 30px 22px; }
+.channel-top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 500px; margin: 12px auto 22px; }
+.channel-top-row label { grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 9px; }
+.channel-top-row label > :first-child { grid-column: 2; }
+.channel-top-row label > select, .channel-top-row label > .stepper { grid-column: 2; }
+.gate-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px; }
+.gate-section > label { display: grid; grid-template-columns: 1fr 80px; max-width: 190px; align-items: center; gap: 9px; }
+.rate-block { margin: 14px 0 18px; }
+.rate-block > label { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 9px; }
+.rate-block > label select { width: 100%; }
+.rate-values { display: grid; gap: 6px; margin-top: 9px; }
+.rate-values label { display: grid; grid-template-columns: 1fr 112px; align-items: center; }
+.rate-chart { height: 195px; padding: 3px; background: #d7d900; border: 1px solid #f4f4f4; }
+.channel-footer { margin-top: 22px; }
+.user-details { width: min(1090px, 96vw); }
+.user-top-row { display: grid; grid-template-columns: 1fr 1.25fr 1.45fr; gap: 22px; max-width: 850px; margin: 12px auto 22px; }
+.user-top-row label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 9px; white-space: nowrap; }
+.user-top-row select, .user-top-row .stepper { min-width: 0; }
+.first-signal { color: var(--yellow) !important; }
+.second-signal { color: #12d61d !important; }
+.third-signal { color: #00b8ff !important; }
+#stimuli { width: min(850px, 94vw); }
+.stimulus-cards { grid-template-columns: 1fr; gap: 30px; }
+.stimulus-card { padding: 12px 24px 20px !important; }
+.pulse-controls { grid-template-columns: 1fr 42px 1fr 1fr 42px 1fr; align-items: end; max-width: 780px; margin: 14px auto 0; }
+.click-control { display: grid; gap: 6px; min-width: 0; text-align: center; color: var(--yellow); font-weight: 700; }
+.click-control output { min-height: 35px; padding: 6px; border: 2px solid #cbd0d5; background: #020202; }
+.click-scroll { display: grid; grid-template-columns: 27px minmax(38px, 1fr) 27px; height: 30px; }
+.click-scroll button, .vertical-click button { min-width: 0; padding: 0; border: 1px solid #b9bdc4; background: #f4f4f4; color: #202124; font-size: 12px; }
+.click-scroll span { border-top: 1px solid #b9bdc4; border-bottom: 1px solid #b9bdc4; background: linear-gradient(90deg, #fafafa 0 46%, #e8e8e8 46% 54%, #fafafa 54%); }
+.vertical-click { grid-template-rows: 26px 35px 26px; align-items: stretch; }
+.vertical-click button { width: 30px; justify-self: center; }
+.drugs-dialog { width: min(1000px, 94vw); }
+.drugs-dialog .dialog-content { padding: 22px 56px 28px; }
+.drugs-dialog .drug-chart { position: relative; height: 180px; }
+.drugs-dialog .apply-drug { position: absolute; inset: 0; width: 100%; border: 0; background: transparent; color: #00c7ce; font-size: 20px; font-weight: 700; pointer-events: none; }
+.drugs-dialog .drug.applied .apply-drug { display: none; }
+.drugs-dialog .drug > label { width: 250px; margin: 10px 0 42px; }
+.drugs-dialog .drug > label .stepper { flex: 0 0 138px; }
+.drugs-dialog .number.changed { background: #74171b; color: #fff400; border-color: #e14c55; }
+@media (max-width: 760px) { .gate-columns { grid-template-columns: 1fr; } }
+
+/* Original HHsim channel-window proportions and label placement. */
+.channel-details,
+.delayed-details,
+.user-details {
+  width: min(1200px, 96vw);
+  max-height: calc(100vh - 16px);
+}
+.channel-details .dialog-content {
+  padding: 22px 6px 24px;
+}
+.channel-heading {
+  margin: 0 0 26px 188px !important;
+  font-size: 38px !important;
+}
+.channel-top-row {
+  width: 570px;
+  max-width: none;
+  margin: 0 0 84px 164px;
+  grid-template-columns: 260px 260px;
+  gap: 46px;
+}
+.channel-top-row label {
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 18px;
+}
+.gate-columns {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 54px;
+}
+.gate-section {
+  min-width: 0;
+}
+.gate-section h2 {
+  margin: 0 0 3px;
+  font-size: 22px;
+}
+.gate-section h2 span {
+  display: none;
+}
+.gate-section > label {
+  grid-template-columns: 1fr 80px;
+  width: 390px;
+  max-width: none;
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+.rate-block {
+  margin: 0 0 86px;
+}
+.rate-block h3 {
+  margin: 0 0 10px;
+  font-size: 21px;
+}
+.rate-block > label {
+  display: block;
+  padding-left: 60px;
+  font-size: 0;
+}
+.rate-block > label select {
+  width: 370px;
+  min-height: 38px;
+  font-size: 16px;
+}
+.rate-values {
+  width: 390px;
+  margin: 10px auto 0;
+  gap: 10px;
+}
+.rate-values label {
+  grid-template-columns: 260px 112px;
+  font-size: 18px;
+}
+.rate-values .stepper,
+.channel-details .number {
+  height: 37px;
+}
+.rate-chart {
+  width: 430px;
+  height: 250px;
+  margin: 72px auto 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.channel-footer {
+  margin: 36px 0 0;
+}
+.delayed-details .channel-top-row {
+  margin-left: 164px;
+}
+.delayed-details .delayed-gate {
+  max-width: 500px;
+}
+.delayed-details .rate-chart {
+  margin-left: 58px;
+  margin-right: 0;
+}
+.user-top-row {
+  width: 870px;
+  max-width: none;
+  margin: 0 0 84px 164px;
+  grid-template-columns: 245px 245px 310px;
+  gap: 28px;
+  font-size: 18px;
+}
+.user-top-row label {
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+}
+
+/* Compact cleanup: retain HHsim's visual hierarchy without browser chrome or
+   oversized empty panel space. */
+body { min-width: 820px; font-size: 14px; }
+.appbar { height: 44px; font-size: 22px; }
+.toolbar { height: 46px; padding: 0 8px; }
+.panel-button, .mode-button, .help-button { height: 34px; font-size: 14px; }
+.panel-button { min-width: 118px; }
+.panel-button span { width: 18px; height: 18px; margin-right: 6px; font-size: 14px; }
+.mode-button { min-width: 82px; border-width: 2px; }
+.help-button { width: 36px; }
+main { max-width: 1220px; padding: 14px 20px 4px; }
+.voltage-plot { min-height: 220px; height: calc((100vh - 300px) * .54); }
+.signal-plot { min-height: 170px; height: calc((100vh - 300px) * .4); }
+.signal-key { top: 27px; left: 5px; gap: 10px; width: 50px; }
+.signal-key span { font-size: 12px; }
+.time-slider { margin: 8px 28px; }
+.signal-panel { grid-template-columns: 150px repeat(3, 160px) minmax(260px, 1fr); gap: 5px 35px; margin: 0 36px; }
+.signal-panel strong { align-self: center; }
+.signal output, .signal-panel > output { margin: 0; font-size: 14px; text-align: center; }
+.signal select { padding: 4px; font-size: 13px; }
+#readout { padding: 8px 12px; font-size: 13px; }
+footer { display: grid; grid-template-columns: 78px 82px minmax(70px, 1fr) 78px 78px 78px 38px 78px 78px 78px minmax(46px, 1fr) 88px 18px 170px; gap: 0; align-items: center; margin-top: 18px; padding-bottom: 7px; }
+footer button { min-width: 0; padding: 7px 8px; font-size: 14px; }
+footer .run.running { background: #e7e800; }
+footer .run { grid-column: 4; margin-left: 0; }
+footer .nudge { grid-column: 5; }
+footer .stop { grid-column: 6; }
+footer #print { grid-column: 8; }
+footer #export { grid-column: 9; margin-left: 6px; }
+footer #clear { grid-column: 10; margin-left: 6px; }
+footer #recall { grid-column: 12; }
+footer #record { grid-column: 14; width: 100%; min-width: 0; height: 32px; padding: 3px 6px; border: 2px solid #252525; background: #f4f4f4; color: #202124; font-weight: 700; }
+
+.channel-details, .delayed-details, .user-details { width: min(980px, 94vw); max-height: calc(100vh - 20px); }
+.channel-details .dialog-content { padding: 15px 22px 18px; }
+.channel-heading { margin: 0 0 18px 60px !important; font-size: 31px !important; }
+.channel-top-row { width: 480px; margin: 0 auto 28px; grid-template-columns: 215px 215px; gap: 26px; }
+.channel-top-row label { font-size: 16px; }
+.gate-columns { gap: 28px; }
+.gate-section h2 { font-size: 19px; }
+.gate-section > label { width: 100%; max-width: 290px; margin-bottom: 10px; font-size: 15px; }
+.rate-block { margin: 0 0 28px; }
+.rate-block h3 { margin-bottom: 6px; font-size: 17px; }
+.rate-block > label { padding-left: 0; font-size: 15px; }
+.rate-block > label select { width: 100%; min-height: 31px; font-size: 14px; }
+.rate-values { width: 100%; margin-top: 7px; gap: 5px; }
+.rate-values label { grid-template-columns: 1fr 100px; font-size: 15px; }
+.rate-values .stepper, .channel-details .number { height: 31px; }
+.rate-chart { width: 360px; max-width: 100%; height: 205px; margin: 28px auto 0; }
+.channel-footer { margin-top: 18px; }
+.delayed-details { width: min(600px, 94vw); }
+.delayed-details .channel-top-row { margin-left: auto; }
+.delayed-details .delayed-gate { max-width: 390px; }
+.delayed-details .rate-chart { margin-left: 0; }
+.user-details { width: min(980px, 94vw); }
+.user-top-row { width: min(760px, 100%); margin: 0 auto 30px; grid-template-columns: 185px 205px 300px; gap: 16px; font-size: 15px; }
+.user-top-row label { grid-template-columns: auto minmax(0, 1fr); gap: 7px; }
+
+#stimuli { width: min(760px, 94vw); }
+.stimulus-card { padding: 10px 14px 16px !important; }
+.small-chart { height: 150px; }
+.pulse-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px; max-width: 650px; margin-top: 12px; }
+.slider-control { gap: 4px; font-size: 12px; }
+.slider-control output { min-height: 27px; padding: 4px; font-size: 14px; }
+.slider-control input[type=range] { height: 18px; accent-color: #7678d6; }
+
+/* Compact original-HHsim dialog scale.  The main display remains readable,
+   while every floating editor is reduced as one consistent window system. */
+dialog { max-height: 82vh; }
+.dialog-title { padding: 8px 38px; font-size: 19px; }
+.close { top: 3px; right: 8px; font-size: 23px; }
+.dialog-content { padding: 14px 22px 18px; }
+.dialog-content h1 { margin-bottom: 14px; font-size: 28px; }
+.panel-footer { gap: 10px; margin-top: 18px; }
+.panel-footer button { min-width: 60px; padding: 6px 10px; font-size: 13px; }
+
+.sidebar-dialog { width: min(450px, 92vw); max-height: 620px; }
+.sidebar-dialog .dialog-content { padding: 14px 28px 20px; }
+.sidebar-dialog .dialog-title { font-size: 18px; }
+.sidebar-dialog .dialog-content h1 { font-size: 29px; }
+.hhsim-grid { grid-template-columns: 74px 1fr 1fr 1fr; gap: 9px 10px; font-size: 15px; }
+.hhsim-grid .stepper, .channels-grid .stepper,
+.hhsim-grid .number, .channels-grid .number { height: 29px; }
+.two-column { width: 300px; grid-template-columns: 130px 126px 44px; gap: 11px 0; margin-top: 24px; }
+.two-column .setting-control, .two-column .setting-text { grid-template-columns: 130px 126px 44px; font-size: 15px; }
+.membrane-sidebar .two-column { gap: 11px 0; margin-top: 24px; }
+.channels-sidebar { width: min(440px, 92vw); }
+.channels-sidebar .dialog-content { padding: 14px 24px 22px; }
+.channels-grid { grid-template-columns: 1fr 125px; gap: 8px 12px; font-size: 16px; }
+.channels-grid input[type=checkbox] { width: 23px; height: 23px; }
+.channels-grid .details { min-height: 30px; padding: 5px; font-size: 13px; }
+
+.channel-details, .delayed-details, .user-details { width: min(780px, 92vw); max-height: 82vh; }
+.channel-details .dialog-content { padding: 13px 18px 16px; }
+.channel-heading { margin: 0 0 14px 34px !important; font-size: 26px !important; }
+.channel-top-row { width: 390px; margin: 0 auto 18px; grid-template-columns: 180px 180px; gap: 20px; }
+.channel-top-row label { grid-template-columns: 54px minmax(0, 1fr); gap: 6px; font-size: 14px; }
+.gate-columns { gap: 18px; }
+.gate-section h2 { margin-bottom: 4px; font-size: 17px; }
+.gate-section > label { max-width: 230px; margin-bottom: 7px; font-size: 13px; }
+.rate-block { margin: 0 0 20px; }
+.rate-block h3 { margin-bottom: 4px; font-size: 15px; }
+.rate-block > label { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 6px; font-size: 13px; }
+.rate-block > label select { min-height: 27px; font-size: 12px; }
+.rate-values { margin-top: 5px; gap: 3px; }
+.rate-values label { grid-template-columns: 1fr 86px; font-size: 13px; }
+.rate-values .stepper, .channel-details .number { height: 27px; }
+.channel-details .number { font-size: 14px; }
+.channel-details .stepper { grid-template-columns: minmax(0, 1fr) 23px; }
+.channel-details .stepper button { width: 23px; font-size: 9px; line-height: 10px; }
+.rate-chart { width: 280px; height: 170px; margin: 18px auto 0; }
+.channel-footer { margin-top: 14px; }
+.delayed-details { width: min(450px, 92vw); }
+.delayed-details .delayed-gate { max-width: 300px; }
+.delayed-details .channel-top-row { width: 300px; grid-template-columns: 140px 140px; margin-left: 0; }
+.delayed-details .rate-chart { margin-left: 0; }
+.user-details { width: min(780px, 92vw); }
+.user-top-row { width: min(610px, 100%); margin: 0 auto 20px; grid-template-columns: 145px 170px 255px; gap: 12px; font-size: 13px; }
+.user-top-row label { gap: 5px; }
+
+#stimuli { width: min(620px, 92vw); }
+#stimuli .dialog-content { padding: 14px 18px 18px; }
+#stimuli .dialog-content h1 { font-size: 27px; }
+.stimulus-cards { gap: 16px; }
+.stimulus-card { padding: 9px 12px 12px !important; }
+.stimulus-cards h2 { margin-bottom: 7px; font-size: 16px; }
+.small-chart { height: 120px; }
+.pulse-controls { grid-template-columns: minmax(72px, 1fr) 30px minmax(72px, 1fr) minmax(72px, 1fr) 30px minmax(72px, 1fr); max-width: 560px; gap: 8px; margin-top: 8px; align-items: end; }
+.click-control { display: grid; gap: 4px; min-width: 0; text-align: center; color: var(--yellow); font-weight: 700; }
+.click-control output { min-height: 24px; padding: 3px; border: 2px solid #cbd0d5; background: #020202; font-size: 12px; }
+.click-scroll { display: grid; grid-template-columns: 20px minmax(24px, 1fr) 20px; height: 22px; }
+.click-scroll button, .vertical-click button { min-width: 0; padding: 0; border: 1px solid #b9bdc4; background: #f4f4f4; color: #202124; font-size: 9px; }
+.stim-scroll-range { width: 100%; min-width: 0; height: 22px; margin: 0; appearance: none; -webkit-appearance: none; background: #f4f4f4; border-top: 1px solid #b9bdc4; border-bottom: 1px solid #b9bdc4; }
+.stim-scroll-range::-webkit-slider-runnable-track { height: 20px; background: linear-gradient(90deg, #fafafa 0 46%, #e8e8e8 46% 54%, #fafafa 54%); }
+.stim-scroll-range::-webkit-slider-thumb { width: 8px; height: 20px; margin-top: 0; appearance: none; -webkit-appearance: none; background: #fff; border: 1px solid #aeb2b9; }
+.vertical-click { grid-template-rows: 20px 20px 24px 20px; align-items: stretch; }
+.vertical-click .stim-scroll-range { width: 30px; height: 20px; }
+.vertical-click button { width: 30px; justify-self: center; }
+
+.drugs-dialog { width: min(680px, 92vw); max-height: 82vh; }
+.drugs-dialog .dialog-content { padding: 14px 28px 18px; }
+.drugs-dialog .dialog-content h1 { font-size: 28px; }
+.drugs-dialog .drug { margin-bottom: 20px; }
+.drugs-dialog .drug h2, .drugs-dialog .pronase h2 { margin: 0 0 5px; font-size: 15px; }
+.drugs-dialog .drug-chart { height: 130px; }
+.drugs-dialog .apply-drug { font-size: 15px; }
+.drugs-dialog .drug > label { width: 190px; margin: 6px 0 20px; font-size: 13px; }
+.drugs-dialog .drug > label .stepper { flex-basis: 100px; }
+.drugs-dialog .pronase { min-height: 95px; }
+.drugs-dialog .pronase label { margin-top: 25px; padding: 7px 24px; font-size: 13px; }
+
+/* Match the original compact rate-editor hierarchy: colored gate headings,
+   modest controls, and rate plots with enough vertical room to breathe. */
+.rate-block.alpha h3 { color: #e76369; }
+.rate-block.beta h3 { color: #6d72df; }
+.channel-details .dialog-content { padding: 11px 16px 14px; }
+.channel-heading { margin-bottom: 10px !important; font-size: 24px !important; }
+.channel-top-row { width: 350px; margin-bottom: 12px; grid-template-columns: 160px 170px; gap: 14px; }
+.channel-top-row label { font-size: 12px; }
+.channel-top-row .gmax-label,
+.user-top-row .gmax-label { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.channel-top-row .gmax-label > *,
+.user-top-row .gmax-label > * { grid-column: auto !important; }
+.channel-top-row .gmax-label .stepper { width: 92px; flex: 0 0 92px; }
+.user-top-row .gmax-label .stepper { width: 84px; flex: 0 0 84px; }
+.gate-section h2 { font-size: 16px; }
+.gate-section > label { margin-bottom: 5px; font-size: 12px; }
+.rate-block { margin-bottom: 15px; }
+.rate-block h3 { font-size: 14px; }
+.rate-block > label { font-size: 12px; }
+.rate-block > label select { min-height: 24px; font-size: 11px; }
+.rate-values { margin-top: 4px; gap: 2px; }
+.rate-values label { grid-template-columns: 1fr 78px; font-size: 12px; }
+.rate-values .stepper, .channel-details .number { height: 25px; }
+.channel-details .number { font-size: 12px; }
+.channel-details .stepper { grid-template-columns: minmax(0, 1fr) 20px; }
+.channel-details .stepper button { width: 20px; font-size: 8px; line-height: 9px; }
+.rate-chart { width: 300px; height: 185px; margin-top: 15px; }
+.user-top-row { width: min(570px, 100%); margin-bottom: 14px; grid-template-columns: 132px 155px 245px; gap: 10px; font-size: 12px; }
+
+/* Original MATLAB-like zoom instructions and right-click menu. */
+.zoom-hint { position: fixed; z-index: 30; right: 18px; bottom: 76px; width: 260px; padding: 10px 12px; background: #17171aeF; border: 1px solid #4a4a4d; color: #ef242b; font-size: 13px; font-weight: 700; line-height: 1.35; text-align: center; pointer-events: none; }
+.zoom-menu { position: fixed; z-index: 40; width: 300px; margin: 0; padding: 3px 0; overflow: hidden; background: #f4f4f4; border: 1px solid #d0d0d0; box-shadow: 0 4px 14px #0007; color: #1f1f1f; font: 16px Arial, sans-serif; }
+.zoom-menu button { display: flex; align-items: center; width: 100%; min-height: 32px; padding: 3px 16px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; }
+.zoom-menu button:hover { background: #e1e7f4; }
+.zoom-menu button span { margin-left: auto; }
+.zoom-menu button b { display: inline-block; width: 20px; margin-left: -12px; font-size: 22px; font-weight: 400; }
+.zoom-menu hr { margin: 4px 0; border: 0; border-top: 2px solid #dedede; }
+
+/* MATLAB-like stimulus controls: amplitude uses a true vertical track, while
+   the value field stays small and aligned beside the bar. */
+#stimuli .pulse-controls {
+  grid-template-columns: minmax(66px, 1fr) 78px minmax(66px, 1fr) minmax(66px, 1fr) 78px minmax(66px, 1fr);
+  gap: 8px;
+  align-items: end;
+}
+#stimuli .click-control { gap: 3px; }
+#stimuli .click-control output { min-width: 0; min-height: 23px; padding: 2px 4px; font-size: 12px; }
+#stimuli .vertical-click {
+  display: grid;
+  grid-template-columns: 23px minmax(44px, 1fr);
+  grid-template-rows: 24px 68px 18px;
+  gap: 0 5px;
+  align-items: center;
+}
+#stimuli .vertical-click button { grid-column: 1; width: 23px; height: 18px; justify-self: stretch; }
+#stimuli .vertical-click button:first-child { grid-row: 1; align-self: end; }
+#stimuli .vertical-click button:last-child { grid-row: 3; }
+#stimuli .vertical-range-wrap { position: relative; grid-column: 1; grid-row: 2; width: 23px; height: 68px; }
+#stimuli .vertical-range-wrap::before { content: ""; position: absolute; inset: 0; border: 1px solid #b9bdc4; background: linear-gradient(#fafafa 0 46%, #e8e8e8 46% 54%, #fafafa 54%); }
+#stimuli .vertical-range-wrap::after { content: ""; position: absolute; z-index: 1; top: var(--stim-thumb-top, 29px); left: 1px; width: 21px; height: 10px; border: 1px solid #aeb2b9; background: #fff; box-shadow: inset 0 0 0 1px #e5e5e5; pointer-events: none; }
+#stimuli .vertical-click output { grid-column: 2; grid-row: 1; width: 100%; min-width: 44px; align-self: start; }
+#stimuli .vertical-click .stim-scroll-range {
+  /* The transparent native range preserves dragging; its custom visual is
+     exactly the same width as the up/down arrow buttons. */
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 23px;
+  height: 68px;
+  margin: 0;
+  padding: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: slider-vertical;
+  -webkit-appearance: slider-vertical;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* The lower timeline is a viewport bar, rather than a fixed-size range
+   thumb. Its width always represents the currently visible duration. */
+.time-slider { gap: 0; align-items: center; }
+.timeline-arrow { width: 22px; min-width: 22px; height: 21px; padding: 0; border: 1px solid #b9bdc4; background: #fff; color: #202124; font-size: 10px; }
+.time-track { position: relative; flex: 1; height: 21px; overflow: hidden; border-top: 1px solid #b9bdc4; border-bottom: 1px solid #b9bdc4; background: #f4f4f4; }
+.time-viewport { position: absolute; z-index: 1; top: 1px; bottom: 1px; left: 0; width: 100%; box-sizing: border-box; border: 1px solid #aeb2b9; background: #fff; box-shadow: inset 0 0 0 1px #e5e5e5; pointer-events: none; }
+.time-handle { position: absolute; top: -1px; bottom: -1px; right: -4px; width: 8px; border: 1px solid #aeb2b9; background: #fff; box-shadow: inset 0 0 0 1px #e5e5e5; }
+.time-track input#timeWindow { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: grab; }
+.time-track input#timeWindow:active { cursor: grabbing; }
+
+/* Drugs window follows the original HHsim hierarchy: a broad, centered
+   dialog, full-width dose-response plots, compact inhibition readouts, and a
+   Pronase box aligned with the plot rectangle. */
+.drugs-dialog { width: min(500px, 92vw); max-height: calc(100vh - 20px); }
+.drugs-dialog .dialog-title { padding: 6px 32px; font-size: 19px; }
+.drugs-dialog .dialog-content { padding: 13px 0 16px; }
+.drugs-dialog .dialog-content h1 { margin: 0 0 22px; font-size: 26px; }
+.drugs-dialog .drug { width: min(400px, calc(100% - 26px)); margin: 0 auto 20px; }
+.drugs-dialog .drug h2,
+.drugs-dialog .pronase h2 { margin: 0 0 5px; font-size: 12px; line-height: 1.15; }
+.drugs-dialog .drug-chart { height: 80px; }
+.drugs-dialog .apply-drug { font-size: 12px; }
+.drugs-dialog .drug > label { width: 154px; margin: 7px 0 0; gap: 8px; font-size: 10px; white-space: nowrap; }
+.drugs-dialog .drug > label .stepper { flex: 0 0 75px; height: 20px; }
+.drugs-dialog .drug > label .number { height: 20px; font-size: 11px; }
+.drugs-dialog .drug > label .stepper button { width: 15px; font-size: 7px; line-height: 8px; }
+.drugs-dialog .pronase { width: min(400px, calc(100% - 26px)); min-height: 80px; margin: 22px auto 0; }
+.drugs-dialog .pronase label { margin-top: 25px; padding: 6px 22px; font-size: 12px; }
+.drugs-dialog .panel-footer { margin: 18px 0 0; gap: 10px; padding-left: 0; }
+.drugs-dialog .panel-footer button { min-width: 40px; padding: 3px 6px; font-size: 10px; }
+
+/* Exact compact proportions of the MATLAB editor windows.  The 10.9-ms
+   plotting margin is retained in JavaScript, but the physical charts and
+   controls below follow setup_stimuli.m / setup_drugs.m: 480×550 and
+   500×550 windows with 400×80 plots. */
+#stimuli {
+  width: min(480px, 94vw);
+  height: min(550px, calc(100vh - 12px));
+  max-height: calc(100vh - 12px);
+}
+#stimuli .dialog-title,
+.drugs-dialog .dialog-title {
+  padding: 4px 28px;
+  font-size: 14px;
+}
+#stimuli .dialog-content {
+  position: relative;
+  height: calc(100% - 24px);
+  min-height: 526px;
+  overflow: hidden;
+  padding: 8px 0 2px;
+}
+#stimuli .dialog-content h1,
+.drugs-dialog .dialog-content h1 {
+  margin: 0 0 13px;
+  font-size: 20px;
+}
+#stimuli .dialog-content h1 {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 100%;
+}
+#stimuli .stimulus-cards {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  display: block;
+  width: 100%;
+}
+#stimuli .stimulus-card {
+  width: 100%;
+  margin: 0 0 45px;
+  padding: 0 !important;
+  border: 0;
+}
+#stimuli .stimulus-cards h2 {
+  margin: 0 0 5px;
+  font-size: 11px;
+}
+#stimuli .small-chart {
+  width: min(400px, calc(100% - 30px));
+  height: 80px;
+  margin: 0 auto;
+}
+#stimuli .pulse-controls {
+  width: min(450px, calc(100% - 18px));
+  margin: 7px auto 0;
+  grid-template-columns: 100px 75px 100px 100px 75px 100px;
+  gap: 0;
+}
+#stimuli .click-control {
+  gap: 2px;
+}
+#stimuli .click-control output {
+  min-height: 19px;
+  padding: 1px 3px;
+  font-size: 11px;
+  border-width: 1px;
+}
+#stimuli .click-scroll {
+  grid-template-columns: 16px minmax(20px, 1fr) 16px;
+  height: 17px;
+}
+#stimuli .click-scroll button {
+  font-size: 8px;
+}
+#stimuli .stim-scroll-range {
+  height: 17px;
+}
+#stimuli .stim-scroll-range::-webkit-slider-runnable-track {
+  height: 15px;
+}
+#stimuli .stim-scroll-range::-webkit-slider-thumb {
+  width: 7px;
+  height: 15px;
+}
+#stimuli .vertical-click {
+  grid-template-columns: 16px 48px;
+  grid-template-rows: 19px 52px 16px;
+  gap: 0 4px;
+}
+#stimuli .vertical-click button {
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+}
+#stimuli .vertical-range-wrap {
+  width: 16px;
+  height: 52px;
+}
+#stimuli .vertical-range-wrap::after {
+  top: var(--stim-thumb-top, 21px);
+  left: 1px;
+  width: 14px;
+  height: 8px;
+}
+#stimuli .vertical-click output {
+  min-width: 48px;
+}
+#stimuli .vertical-click .stim-scroll-range {
+  width: 16px;
+  height: 52px;
+}
+#stimuli .panel-footer,
+.drugs-dialog .panel-footer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  gap: 10px;
+  padding-left: 0;
+}
+#stimuli .panel-footer button,
+.drugs-dialog .panel-footer button {
+  min-width: 38px;
+  padding: 3px 6px;
+  font-size: 10px;
+}
+.drugs-dialog {
+  width: min(500px, 94vw);
+  height: min(550px, calc(100vh - 12px));
+  max-height: calc(100vh - 12px);
+}
+.drugs-dialog .dialog-content {
+  padding: 8px 0 2px;
+}
+.drugs-dialog .drug {
+  width: min(400px, calc(100% - 30px));
+  margin: 0 auto 20px;
+}
+.drugs-dialog .drug h2,
+.drugs-dialog .pronase h2 {
+  margin: 0 0 3px;
+  font-size: 11px;
+}
+.drugs-dialog .drug-chart { height: 80px; }
+.drugs-dialog .apply-drug { font-size: 11px; }
+.drugs-dialog .drug > label {
+  width: 146px;
+  margin: 6px 0 0;
+  gap: 7px;
+  font-size: 10px;
+}
+.drugs-dialog .drug > label .stepper { flex-basis: 48px; height: 18px; }
+.drugs-dialog .drug > label .number { height: 18px; padding: 2px 3px; font-size: 10px; }
+.drugs-dialog .drug > label .stepper button { width: 13px; font-size: 7px; line-height: 7px; }
+.drugs-dialog .pronase {
+  width: min(400px, calc(100% - 30px));
+  min-height: 80px;
+  margin: 18px auto 0;
+  border-width: 1px;
+}
+.drugs-dialog .pronase label { margin-top: 25px; padding: 5px 20px; font-size: 11px; }
+
+/* setup_drugs.m is a fixed 500 × 550 canvas.  Put each source control at
+   its corresponding canvas location instead of allowing normal document
+   flow to compress the two dose-response groups. */
+.drugs-dialog .dialog-content {
+  position: relative;
+  height: calc(100% - 24px);
+  min-height: 526px;
+  overflow: hidden;
+}
+.drugs-dialog .dialog-content h1 {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 100%;
+}
+.drugs-dialog .drug,
+.drugs-dialog .pronase {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+}
+.drugs-dialog #ttxDrug { top: 50px; }
+.drugs-dialog #teaDrug { top: 260px; }
+.drugs-dialog .drug > label { margin-top: 20px; }
+.drugs-dialog .pronase { top: 410px; }
+
+/* A 440×100 canvas leaves Chart.js the same effective 400×80 plotting area
+   as the MATLAB axes once its y-label and x-label gutters are included. */
+.drugs-dialog .drug { width: min(440px, calc(100% - 20px)); }
+.drugs-dialog .drug-chart { height: 100px; }
+.drugs-dialog .drug-chart canvas { width: 100% !important; height: 100% !important; }
+.drugs-dialog .apply-drug { z-index: 2; font-size: 12px; pointer-events: auto; }
+.drugs-dialog .apply-drug {
+  display: block;
+  padding: 0;
+}
+.drugs-dialog .apply-drug span {
+  position: absolute;
+  transform: translateY(-50%);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: 0 1px 1px #000;
+}
+
+/* make_stimulus.m uses explicit pixel positions, not six equal grid cells.
+   Its amplitude boxes deliberately overlap the adjacent duration controls
+   vertically.  This fixed map keeps every box inside the 480 px dialog and
+   precisely follows x = 15, 120, 140, 245, 350, 370 in the source. */
+#stimuli .pulse-controls {
+  position: relative;
+  display: block;
+  width: min(450px, calc(100% - 30px));
+  height: 100px;
+  margin: 7px auto 0;
+}
+#stimuli .pulse-controls > .click-control {
+  position: absolute;
+}
+#stimuli .pulse-controls > .click-control:not(.vertical-click) {
+  display: grid;
+  width: 90px;
+  justify-items: center;
+}
+#stimuli .pulse-controls > .click-control:not(.vertical-click) output {
+  width: 48px;
+}
+#stimuli .pulse-controls > .click-control:not(.vertical-click) .click-scroll {
+  width: 90px;
+}
+#stimuli .pulse-controls > :nth-child(1) { left: 0; top: 43px; }
+#stimuli .pulse-controls > :nth-child(2) { left: 105px; top: 0; }
+#stimuli .pulse-controls > :nth-child(3) { left: 125px; top: 43px; }
+#stimuli .pulse-controls > :nth-child(4) { left: 230px; top: 43px; }
+#stimuli .pulse-controls > :nth-child(5) { left: 335px; top: 0; }
+#stimuli .pulse-controls > :nth-child(6) { left: 355px; top: 43px; }
+
+/* Final fixed geometry from setup_drugs.m: a 500 × 550 window with two
+   400 × 80 plotting rectangles.  The slightly larger Chart.js containers
+   reserve space for its axis-label gutters, leaving the MATLAB-sized plot. */
+.drugs-dialog {
+  width: min(500px, 94vw);
+  height: min(550px, calc(100vh - 12px));
+  max-height: calc(100vh - 12px);
+  overflow: hidden;
+}
+.drugs-dialog .dialog-content {
+  position: relative;
+  height: calc(100% - 28px);
+  min-height: 0;
+  padding: 8px 0 2px;
+  overflow: hidden;
+}
+.drugs-dialog .dialog-content h1 {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  font-size: 20px;
+}
+.drugs-dialog .drug,
+.drugs-dialog .pronase {
+  position: absolute;
+  left: 50%;
+  width: min(460px, calc(100% - 18px));
+  margin: 0;
+  transform: translateX(-50%);
+}
+.drugs-dialog #ttxDrug { top: 50px; }
+.drugs-dialog #teaDrug { top: 230px; }
+.drugs-dialog .drug h2,
+.drugs-dialog .pronase h2 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 1.15;
+}
+.drugs-dialog .drug-chart { height: 140px; }
+.drugs-dialog .drug-chart canvas { width: 100% !important; height: 100% !important; }
+.drugs-dialog .drug > label {
+  width: 154px;
+  margin: 10px 0 0;
+  gap: 7px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.drugs-dialog .drug > label .stepper { flex-basis: 48px; height: 18px; }
+.drugs-dialog .drug > label .number { height: 18px; padding: 2px 3px; font-size: 10px; }
+.drugs-dialog .drug > label .stepper button { width: 13px; font-size: 7px; line-height: 7px; }
+.drugs-dialog .apply-drug { z-index: 2; display: block; padding: 0; font-size: 12px; pointer-events: auto; }
+.drugs-dialog .apply-drug span {
+  position: absolute;
+  transform: translateY(-50%);
+  padding: 0;
+  background: transparent;
+  text-shadow: 0 1px 1px #000;
+}
+.drugs-dialog .pronase {
+  top: 455px;
+  min-height: 70px;
+  border-width: 1px;
+}
+.drugs-dialog .pronase label { margin-top: 25px; padding: 5px 20px; font-size: 11px; }
+
+/* The reference editor's dotted zero-current baseline has true dot spacing. */
+#stimuli .small-chart canvas { image-rendering: auto; }
+
+/* Pixel-positioned final pass for the 500 × 550 MATLAB Drugs dialog.
+   Keep the controls under (rather than at the left edge of) their plots and
+   reserve the last 100 px for the complete Pronase panel and footer. */
+.drugs-dialog .dialog-content h1 { top: 2px; }
+.drugs-dialog #ttxDrug { top: 45px; }
+.drugs-dialog #teaDrug { top: 225px; }
+.drugs-dialog .drug h2 { margin-bottom: -7px; }
+.drugs-dialog .drug-chart { height: 150px; }
+.drugs-dialog .drug > label {
+  position: absolute;
+  top: 136px;
+  left: 30px;
+  margin: 0;
+}
+.drugs-dialog .pronase {
+  top: 420px;
+  min-height: 80px;
+}
+.drugs-dialog .pronase h2 {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  width: 100%;
+}
+.drugs-dialog .pronase label { margin-top: 12px; }
+
+/* The native MATLAB window extends below the Pronase panel so its Reset/Hide
+   controls touch the lower-left edge.  It has no surrounding white dialog
+   frame; only the plot axes and Pronase group carry their own outlines. */
+.drugs-dialog {
+  height: min(570px, calc(100vh - 2px));
+  max-height: calc(100vh - 2px);
+  border: 0;
+}
+.drugs-dialog .pronase label { margin-top: 31px; }
+
+/* Voltage Clamp mirrors the compact four-segment MATLAB protocol editor.
+   The voltage controls remain vertical, while each duration is adjusted with
+   its horizontal slider and the radio marks the sweep parameter. */
+.voltage-clamp-dialog {
+  width: min(600px, calc(100vw - 12px));
+  height: min(505px, calc(100vh - 8px));
+  max-height: calc(100vh - 8px);
+  overflow: hidden;
+}
+.voltage-clamp-dialog .dialog-title { padding: 4px 28px; font-size: 14px; }
+.voltage-clamp-dialog .dialog-content { height: calc(100% - 24px); padding: 8px 30px 2px; overflow: hidden; }
+.voltage-clamp-heading { margin: 0 0 7px !important; color: #9694ff; font-size: 20px !important; }
+.voltage-clamp-dialog h2 { margin: 0 0 1px; color: #9694ff; text-align: center; font-size: 12px; }
+.vc-protocol-chart { height: 132px; }
+.vc-protocol-chart canvas { width: 100% !important; height: 100% !important; }
+.vc-controls {
+  display: grid;
+  grid-template-columns: repeat(4, 28px minmax(58px, 1fr));
+  gap: 4px;
+  align-items: end;
+  margin: 12px 0 0;
+}
+.vc-control { display: grid; min-width: 0; align-items: center; }
+.vc-control-label { display: none; }
+.vc-control output { min-width: 0; min-height: 18px; padding: 2px; border: 1px solid #cbd0d5; background: #020202; color: var(--yellow); text-align: center; font-size: 11px; font-weight: 700; }
+.vc-control.voltage { grid-template-columns: 19px minmax(38px, 1fr); grid-template-rows: 20px 56px 17px; gap: 0 4px; }
+.vc-control.voltage > button { grid-column: 1; width: 19px; height: 17px; min-width: 0; padding: 0; border: 1px solid #b9bdc4; background: #f4f4f4; color: #202124; font-size: 8px; }
+.vc-control.voltage > button:first-of-type { grid-row: 1; align-self: end; }
+.vc-control.voltage > button:last-of-type { grid-row: 3; }
+.vc-control.voltage output { grid-column: 2; grid-row: 1; align-self: start; }
+.vc-vertical-wrap { position: relative; grid-column: 1; grid-row: 2; width: 19px; height: 56px; }
+.vc-vertical-wrap::before { content: ""; position: absolute; inset: 0; border: 1px solid #b9bdc4; background: linear-gradient(#fafafa 0 46%, #e8e8e8 46% 54%, #fafafa 54%); }
+.vc-vertical-wrap::after { content: ""; position: absolute; z-index: 1; top: var(--vc-thumb-top, 23px); left: 1px; width: 17px; height: 8px; border: 1px solid #aeb2b9; background: #fff; box-shadow: inset 0 0 0 1px #e5e5e5; pointer-events: none; }
+.vc-control.voltage .vc-range { position: absolute; z-index: 2; inset: 0; width: 19px; height: 56px; margin: 0; padding: 0; writing-mode: vertical-lr; direction: rtl; appearance: slider-vertical; -webkit-appearance: slider-vertical; opacity: 0; cursor: pointer; }
+.vc-control.duration { grid-template-rows: 18px 20px 17px; gap: 3px; }
+.vc-control.duration output { grid-row: 1; }
+.vc-click-scroll { display: grid; grid-row: 2; grid-template-columns: 17px minmax(24px, 1fr) 17px; height: 20px; }
+.vc-click-scroll button { min-width: 0; padding: 0; border: 1px solid #b9bdc4; background: #f4f4f4; color: #202124; font-size: 8px; }
+.vc-click-scroll .vc-range { width: 100%; min-width: 0; height: 20px; margin: 0; appearance: none; -webkit-appearance: none; background: #f4f4f4; border-top: 1px solid #b9bdc4; border-bottom: 1px solid #b9bdc4; }
+.vc-click-scroll .vc-range::-webkit-slider-runnable-track { height: 18px; background: linear-gradient(90deg, #fafafa 0 46%, #e8e8e8 46% 54%, #fafafa 54%); }
+.vc-click-scroll .vc-range::-webkit-slider-thumb { width: 7px; height: 18px; margin-top: 0; appearance: none; -webkit-appearance: none; background: #fff; border: 1px solid #aeb2b9; }
+.vc-select { grid-row: 3; justify-self: center; width: 17px; height: 17px; margin: 0; accent-color: #00b8ff; }
+.vc-var-note { margin: 15px 0 0; color: #f000de; text-align: center; font-size: 12px; }
+.vc-var-input { display: grid; gap: 4px; width: 215px; margin: 65px 0 0; color: #e5e5e5; font-size: 11px; font-weight: 700; }
+.vc-var-input .number { height: 25px; padding: 3px; color: #f000de; border-width: 1px; font-size: 12px; text-align: left; }
+.voltage-clamp-dialog .dialog-content { position: relative; }
+.voltage-clamp-dialog .panel-footer { position: absolute; left: 0; bottom: 0; margin: 0; gap: 10px; }
+.voltage-clamp-dialog .panel-footer button { min-width: 40px; padding: 3px 6px; font-size: 10px; }
+
+/* Voltage Clamp uses HHsim's compact, single-recording workspace: its
+   protocol replaces the gate plot and the active sweep is shown beneath the
+   time bar. */
+.clamp-status { display: none; }
+/* Clamp keeps the two regular plot rows: current above, command voltage
+   below. Only the gate-variable legend and selector panel disappear. */
+body.clamp-mode .signal-key,
+body.clamp-mode .signal-panel { display: none; }
+/* Clamp inherits the full Voltage Recording plotting workspace. Its content
+   differs (current then command voltage), not its screen footprint. */
+body.clamp-mode .clamp-status {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) minmax(280px, 1.35fr);
+  gap: 16px;
+  align-items: center;
+  margin: 0 28px 8px;
+  font-size: 12px;
+}
+body.clamp-mode .clamp-status #clampParameter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  color: #f000de;
+  white-space: nowrap;
+}
+body.clamp-mode .clamp-status .clamp-sweep-value { font-weight: 800; }
+body.clamp-mode .clamp-status .clamp-sweep-value:not(:last-child)::after {
+  content: ",";
+  color: #f000de;
+}
+body.clamp-mode .clamp-status > span:last-child { padding: 9px 12px; background: #601317; border: 1px solid #912a30; text-align: center; }
+body.clamp-mode footer { padding-top: 0; }
+
+footer button:disabled { cursor: default; opacity: .42; }
+
+@media print {
+  body.print-mode {
+    min-width: 0;
+    background: #fff !important;
+    color: #111 !important;
+  }
+  body.print-mode .appbar,
+  body.print-mode .toolbar,
+  body.print-mode .time-slider,
+  body.print-mode .signal-panel,
+  body.print-mode footer,
+  body.print-mode .cursor-popup,
+  body.print-mode .zoom-hint,
+  body.print-mode .zoom-menu { display: none !important; }
+  body.print-mode main { max-width: none; padding: 18px; }
+  body.print-mode .voltage-plot,
+  body.print-mode .signal-plot { break-inside: avoid; background: #fff; }
+}
