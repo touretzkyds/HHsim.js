@@ -95,7 +95,9 @@ function draw(points, viewEnd) {
 // edge in view unless the user has intentionally scrolled away from it.
 function automaticViewEnd(time) {
   if (!state.autoScrollRight) return state.viewEnd;
-  return Math.max(state.viewSpan, time);
+  // Keep a small look-ahead after the newest calculated point.  This makes
+  // an active trace readable without reserving an ever-growing empty region.
+  return Math.max(state.viewSpan, time + 3);
 }
 
 function updateAutoScrollState(viewEnd) {
@@ -129,7 +131,11 @@ function syncTimeline(viewEnd) {
   // The timeline represents elapsed experiment time, so its visible window
   // may grow to the right but never exposes negative milliseconds.
   const minimum = halfSpan;
-  const maximum = Math.max(state.duration + halfSpan, lastTime + halfSpan, center, minimum);
+  // The timeline range is determined by the recorded trace, not by a manual
+  // pan position.  Otherwise moving the viewport right grows the range and
+  // visually shrinks the scrollbar even though the zoom span has not changed.
+  const traceEnd = Math.max(state.duration, lastTime + 3);
+  const maximum = Math.max(traceEnd + halfSpan, minimum);
   const windowControl = $("timeWindow");
   windowControl.min = minimum;
   windowControl.max = maximum;
