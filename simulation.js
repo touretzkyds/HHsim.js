@@ -426,6 +426,9 @@ function runSimulation(runDuration = state.duration, options = {}) {
     state.history = [...before, ...segment];
     state.time += actualDuration;
     state.running = false;
+    // A continuous Run is a live recording. Keep its viewport attached to
+    // the active endpoint even if the timeline was dragged during this pass.
+    if (state.continuousRun) state.autoScrollRight = true;
     const displayEnd = automaticViewEnd(state.history.at(-1).time);
     draw(state.history, displayEnd);
     syncTimeline(displayEnd);
@@ -488,6 +491,9 @@ function runSimulation(runDuration = state.duration, options = {}) {
     const end = visible.at(-1).time;
     // Keep the click-readout data current while the animated trace is drawn.
     state.history = visible;
+    // Unlike completed one-shot stimuli, Run is explicitly continuous and
+    // should keep the timeline following the point currently being computed.
+    if (state.continuousRun) state.autoScrollRight = true;
     const displayEnd = automaticViewEnd(end);
     draw(visible, displayEnd);
     syncTimeline(displayEnd);
@@ -592,7 +598,11 @@ function continueStimulus(which) {
     restoreStateFromPoint(visiblePoint);
   }
   if (!hasUsableSimulationState()) resetSimulation();
+  // Starting a new stimulus is an explicit request to continue the live
+  // experiment. Return from any earlier manually inspected region to the
+  // trace's current right edge before the new segment begins to animate.
   selectStimulus(which);
+  resumeAutoFollow();
   // MATLAB does not run a preset post-pulse interval. Its iterate loop checks
   // the five-ms voltage-history criterion after every accepted solver step
   // and stops immediately once it has settled. Give the web solver a generous

@@ -100,13 +100,31 @@ function automaticViewEnd(time) {
   return Math.max(state.viewSpan, time + 3);
 }
 
+function resumeAutoFollow() {
+  state.autoScrollRight = true;
+  if (!state.history.length) return;
+  const displayEnd = automaticViewEnd(state.history.at(-1).time);
+  draw(state.history, displayEnd);
+  syncTimeline(displayEnd);
+}
+
+function timelineBounds() {
+  const firstTime = state.history[0]?.time ?? 0;
+  const lastTime = state.history.at(-1)?.time ?? state.duration;
+  return {
+    // Normal recordings always begin at 0 ms.  The trace may continue only
+    // three milliseconds past its newest point, never into negative time.
+    start: Math.max(0, firstTime),
+    end: Math.max(state.duration, lastTime + 3)
+  };
+}
+
 function updateAutoScrollState(viewEnd) {
-  const latest = state.history.at(-1)?.time ?? state.time;
-  // A small tolerance permits a user to land just before the final point
-  // without unexpectedly disabling follow mode, while a meaningful scroll
-  // toward earlier data leaves the view exactly where the user placed it.
-  const tolerance = Math.max(.25, state.viewSpan * .05);
-  state.autoScrollRight = viewEnd >= latest - tolerance;
+  // A user-owned position must never drift while the trace continues to
+  // grow. Follow mode stays enabled only when the viewport is genuinely at
+  // the rightmost permitted edge (the final point plus its 3 ms buffer).
+  const rightEdge = timelineBounds().end;
+  state.autoScrollRight = viewEnd >= rightEdge - .001;
 }
 
 function panVertically(which, sourceBounds, shift) {
@@ -123,41 +141,47 @@ function pointAt(time) {
 }
 
 function syncTimeline(viewEnd) {
-  const lastTime = state.history.at(-1)?.time ?? state.duration;
   const halfSpan = state.viewSpan / 2;
   const center = viewEnd - halfSpan;
   // MATLAB's moveslider.m uses the slider as the midpoint of the visible
   // x-window.  Using the right edge causes the next tick to appear offset.
-  // The timeline represents elapsed experiment time, so its visible window
-  // may grow to the right but never exposes negative milliseconds.
-  const minimum = halfSpan;
-  // The timeline range is determined by the recorded trace, not by a manual
-  // pan position.  Otherwise moving the viewport right grows the range and
-  // visually shrinks the scrollbar even though the zoom span has not changed.
-  const traceEnd = Math.max(state.duration, lastTime + 3);
-  const maximum = Math.max(traceEnd + halfSpan, minimum);
+  // The range input stores the *center* of the visible window.  Its endpoints
+  // therefore correspond exactly to the graph edges: [0, span] at the left,
+  // and [traceEnd - span, traceEnd] at the right.
+  const bounds = timelineBounds();
+  const minimum = bounds.start + halfSpan;
+  const maximum = Math.max(minimum, bounds.end - halfSpan);
   const windowControl = $("timeWindow");
   windowControl.min = minimum;
   windowControl.max = maximum;
   windowControl.value = Math.min(maximum, Math.max(minimum, center));
-  updateTimelineViewport(minimum, maximum, Number(windowControl.value));
+  updateTimelineViewport(bounds.start, bounds.end, Number(windowControl.value));
 }
 
-function updateTimelineViewport(minimum = Number($("timeWindow").min), maximum = Number($("timeWindow").max), center = value("timeWindow")) {
-  const total = Math.max(.25, maximum - minimum);
+function updateTimelineViewport(startBound, endBound, center = value("timeWindow")) {
+  const bounds = Number.isFinite(startBound) && Number.isFinite(endBound)
+    ? { start: startBound, end: endBound }
+    : timelineBounds();
+  const total = Math.max(.25, bounds.end - bounds.start);
   const span = Math.min(total, Math.max(.25, state.viewSpan));
-  const start = center - span / 2;
+  const maxStart = Math.max(bounds.start, bounds.end - span);
+  const start = Math.min(maxStart, Math.max(bounds.start, center - span / 2));
   const viewport = $("timeViewport");
-  viewport.style.left = `${((start - minimum) / total) * 100}%`;
-  viewport.style.width = `${Math.max(2, (span / total) * 100)}%`;
+  // Draw the bar against the same 0--traceEnd coordinate system as the plot,
+  // not the range control's center-coordinate system.  Its width is therefore
+  // constant during pan and never gets clipped at either track edge.
+  viewport.style.left = `${Math.max(0, Math.min(100, ((start - bounds.start) / total) * 100))}%`;
+  viewport.style.width = `${Math.min(100, Math.max(2, (span / total) * 100))}%`;
 }
 
 function setZoomWindow(start, end, render = true) {
   if (!state.history.length) return;
   const requestedStart = Math.min(start, end);
   const requestedEnd = Math.max(requestedStart + .25, Math.max(start, end));
-  const span = requestedEnd - requestedStart;
-  const safeStart = Math.max(0, requestedStart);
+  const bounds = timelineBounds();
+  const span = Math.min(bounds.end - bounds.start, requestedEnd - requestedStart);
+  const maximumStart = Math.max(bounds.start, bounds.end - span);
+  const safeStart = Math.min(maximumStart, Math.max(bounds.start, requestedStart));
   const safeEnd = safeStart + span;
   state.viewSpan = safeEnd - safeStart;
   state.viewEnd = safeEnd;
@@ -186,7 +210,7 @@ function horizontalZoomMaximum() {
   // The MATLAB viewer can zoom back out to the available trace, not merely
   // to the 60 ms opening viewport.  Keep a previously panned view reachable
   // as well, even when no newer samples have been calculated yet.
-  return Math.max(state.duration, state.history.at(-1)?.time || 0, state.viewEnd);
+  return timelineBounds().end;
 }
 
 function setHorizontalZoomAround(center, requestedSpan, render = true) {
@@ -459,10 +483,10 @@ function installPanDrag(chart, voltage) {
     // avoids feedback that made each small drag jump far too dramatically.
     const xShift = ((event.clientX - drag.clientX) / drag.width) * state.viewSpan * .35;
     const shiftedStart = drag.start - xShift;
-    // Panning can reveal future empty space, but an experiment has no
-    // negative time. Keep the left side of every normal recording at 0 ms.
-    state.viewEnd = Math.max(state.viewSpan, Math.round(shiftedStart + state.viewSpan));
-    updateAutoScrollState(state.viewEnd);
+    // Keep every manual pan within the actual recording plus the three-ms
+    // right-side look-ahead.  setZoomWindow also keeps the timeline thumb
+    // aligned with the graph's visible x-range.
+    setZoomWindow(shiftedStart, shiftedStart + state.viewSpan, false);
     const span = drag.yBounds.max - drag.yBounds.min;
     // An upward hand motion raises the viewport's numeric range, which makes
     // unchanged traces travel downward on screen; downward is the inverse.
@@ -473,7 +497,6 @@ function installPanDrag(chart, voltage) {
     if (Math.abs(event.clientY - drag.clientY) > 2) {
       panVertically(voltage ? "voltage" : "signal", drag.yBounds, yShift);
     }
-    syncTimeline(state.viewEnd);
     draw(state.history, state.viewEnd);
   });
   chart.canvas.addEventListener("pointerup", endDrag);

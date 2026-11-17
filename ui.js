@@ -325,6 +325,9 @@ $("run").addEventListener("click", (event) => {
     runVoltageClamp();
     return;
   }
+  // Run resumes the live experiment, so it should return from a manually
+  // inspected part of the trace to the current right edge before advancing.
+  resumeAutoFollow();
   stopContinuousDrugRun();
   state.nudgeSettling = false;
   state.stimulusSettling = false;
@@ -494,6 +497,18 @@ function setRecordingMode() {
   $("hint").textContent = "Voltage Recording selected.";
 }
 $("record").addEventListener("change", setRecordingMode);
+let timelineDrawFrame = null;
+
+function queueTimelineDraw() {
+  if (timelineDrawFrame !== null) return;
+  timelineDrawFrame = requestAnimationFrame(() => {
+    timelineDrawFrame = null;
+    if (state.recordingMode !== "clamp" && state.history.length) {
+      draw(state.history, state.viewEnd);
+    }
+  });
+}
+
 $("timeWindow").oninput = () => {
   const center = value("timeWindow");
   if (state.recordingMode === "clamp") {
@@ -501,7 +516,10 @@ $("timeWindow").oninput = () => {
     return;
   }
   if (!state.history.length) return;
-  setZoomWindow(center - state.viewSpan / 2, center + state.viewSpan / 2);
+  // Move the scrollbar immediately, but coalesce expensive Chart.js redraws
+  // to one per display frame while the range input is being dragged.
+  setZoomWindow(center - state.viewSpan / 2, center + state.viewSpan / 2, false);
+  queueTimelineDraw();
 };
 $("timelineBack").addEventListener("click", () => {
   if (!state.history.length) return;
@@ -537,7 +555,8 @@ function installTimelinePan() {
     }
     const shift = ((event.clientX - drag.clientX) / drag.width) * state.viewSpan * .35;
     const center = Math.round(drag.center - shift);
-    setZoomWindow(center - state.viewSpan / 2, center + state.viewSpan / 2);
+    setZoomWindow(center - state.viewSpan / 2, center + state.viewSpan / 2, false);
+    queueTimelineDraw();
   };
   track.addEventListener("pointerdown", (event) => {
     if (state.mode !== "pan" || event.button !== 0 || !state.history.length) return;
