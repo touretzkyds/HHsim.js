@@ -1,2 +1,5 @@
-# hhsim-web
-Web version of the Hodgkin-Huxley Simulator
+# HHsim.js
+Authors: David S. Touretzky and Vishnu Parameswaran, Carnegie Mellon University.
+
+JavaScript reimplementation of the MATLAB Hodgkin-Huxley simulator HHsim created by David S. Touretzky, Mark V. Albert, Nathaniel D. Daw, Alok Ladsariya, and Mahtiyar Bonakdarpour.
+
