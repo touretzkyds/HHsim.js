@@ -221,19 +221,23 @@ document.querySelectorAll("[data-stim-slider]").forEach((slider) => slider.addEv
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }));
 document.querySelectorAll("#ttx, #tea").forEach((input) => {
+  input.addEventListener("focus", () => input.select());
   // Input is deliberately presentation-only: it lets users erase a digit
   // and type a multi-digit percentage without advancing the simulation.
   input.addEventListener("input", () => {
     refreshChangedState($("drugs"));
     updateDrugToolbarIndicator();
+    const raw = input.value.trim();
+    updateDoseChart(input.id, raw !== "" && Number.isFinite(Number(raw)) ? Number(raw) : state.drugInhibition[input.id]);
   });
   input.addEventListener("change", () => {
-    applyDrugValue(input.id, input.value, { preserveText: true });
+    applyDrugValue(input.id, input.value);
+    if (input.value.trim() === "") input.value = String(Math.round(state.drugInhibition[input.id]));
+    updateDoseChart(input.id);
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      applyDrugValue(input.id, input.value, { preserveText: true });
       input.blur();
     }
   });
@@ -446,7 +450,7 @@ function exportSimulationCsv() {
 
 $("print").onclick = printWithWhiteBackground;
 $("export").onclick = exportSimulationCsv;
-$("help").onclick = () => window.open("https://www.cs.cmu.edu/~dst/HHsim/", "_blank", "noopener");
+$("help").onclick = () => window.open("index.html", "_blank", "noopener");
 
 function updateProtocolPanelButton(clampMode) {
   const button = $("protocolPanelButton");

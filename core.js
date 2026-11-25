@@ -187,15 +187,42 @@ function xScale(maximum = 60) {
 }
 
 function lineChart(canvas, yOptions) {
+  const dottedGrid = {
+    id: "hhsimDottedGrid",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+      ctx.clip();
+      ctx.strokeStyle = "rgba(220,225,235,.55)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([1, 3]);
+      for (const tick of scales.x.ticks) {
+        const x = scales.x.getPixelForValue(tick.value);
+        ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom); ctx.stroke();
+      }
+      for (const tick of scales.y.ticks) {
+        const y = scales.y.getPixelForValue(tick.value);
+        ctx.beginPath(); ctx.moveTo(chartArea.left, y); ctx.lineTo(chartArea.right, y); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  };
+  yOptions.grid = { ...yOptions.grid, drawOnChartArea: false };
+  const xOptions = xScale();
+  xOptions.grid.drawOnChartArea = false;
   return new Chart($(canvas), {
     type: "line",
+    plugins: [dottedGrid],
     data: { datasets: [] },
     options: {
       responsive: true, maintainAspectRatio: false,
       animation: { duration: 0 },
       plugins: { legend: { display: false }, tooltip: { enabled: false } },
       interaction: { intersect: false, mode: "nearest" },
-      scales: { x: xScale(), y: yOptions }
+      scales: { x: xOptions, y: yOptions }
     }
   });
 }
@@ -218,6 +245,10 @@ function smallChart(canvas) {
   chart.options.scales.x.min = 0;
   chart.options.scales.x.max = 10;
   chart.options.scales.x.ticks.stepSize = 1;
+  chart.options.scales.x.ticks.font = { size: 11 };
+  chart.options.scales.y.ticks.font = { size: 11 };
+  chart.options.scales.x.title.font = { size: 13 };
+  chart.options.scales.y.title.font = { size: 13 };
   return chart;
 }
 const stimulusCharts = [smallChart("stimChart1"), smallChart("stimChart2")];
@@ -248,8 +279,8 @@ function logDecadeLabel(rawValue) {
   return `10${String(exponent).replace(/-/g, "⁻").replace(/0/g, "⁰").replace(/1/g, "¹").replace(/2/g, "²").replace(/3/g, "³")}`;
 }
 
-function updateDoseChart(drug) {
-  const inhibition = Math.min(100, Math.max(0, state.drugInhibition[drug] ?? value(drug)));
+function updateDoseChart(drug, preview) {
+  const inhibition = Math.min(100, Math.max(0, preview ?? state.drugInhibition[drug] ?? value(drug)));
   const concentration = doseForInhibition(inhibition);
   const chart = doseCharts[drug];
   chart.data.datasets = [

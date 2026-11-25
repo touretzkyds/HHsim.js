@@ -297,6 +297,25 @@ dialog { max-height: 82vh; }
 .channels-sidebar .dialog-content { padding: 14px 24px 22px; }
 .channels-grid { grid-template-columns: 1fr 125px; gap: 8px 12px; font-size: 16px; }
 .channels-grid input[type=checkbox] { width: 23px; height: 23px; }
+.channels-grid input[type=checkbox] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 23px;
+  display: inline-grid;
+  place-content: center;
+  margin: 0;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  background: #f3a3a3;
+  color: #a00000;
+  cursor: pointer;
+}
+.channels-grid input[type=checkbox]::before { content: "×"; font: bold 20px/1 Arial, sans-serif; }
+.channels-grid input[type=checkbox]:checked { background: #9bea9b; color: #087d1b; }
+.channels-grid input[type=checkbox]:checked::before { content: "✓"; font-size: 17px; }
+.channels-grid #userChannel:not(:checked) { background: white; }
+.channels-grid #userChannel:not(:checked)::before { content: none; }
+.channels-grid input[type=checkbox]:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .channels-grid .details { min-height: 30px; padding: 5px; font-size: 13px; }
 
 .channel-details, .delayed-details, .user-details { width: min(780px, 92vw); max-height: 82vh; }
@@ -843,7 +862,7 @@ dialog { max-height: 82vh; }
 .vc-control { display: grid; min-width: 0; align-items: center; }
 .vc-control-label { display: none; }
 .vc-control output { min-width: 0; min-height: 18px; padding: 2px; border: 1px solid #cbd0d5; background: #020202; color: var(--yellow); text-align: center; font-size: 11px; font-weight: 700; }
-.vc-control.voltage { grid-template-columns: 19px minmax(38px, 1fr); grid-template-rows: 20px 56px 17px; gap: 0 4px; }
+.vc-control.voltage { grid-template-columns: 19px minmax(38px, 1fr); grid-template-rows: 20px 56px 17px 17px; gap: 0 4px; }
 .vc-control.voltage > button { grid-column: 1; width: 19px; height: 17px; min-width: 0; padding: 0; border: 1px solid #b9bdc4; background: #f4f4f4; color: #202124; font-size: 8px; }
 .vc-control.voltage > button:first-of-type { grid-row: 1; align-self: end; }
 .vc-control.voltage > button:last-of-type { grid-row: 3; }
@@ -859,7 +878,39 @@ dialog { max-height: 82vh; }
 .vc-click-scroll .vc-range { width: 100%; min-width: 0; height: 20px; margin: 0; appearance: none; -webkit-appearance: none; background: #f4f4f4; border-top: 1px solid #b9bdc4; border-bottom: 1px solid #b9bdc4; }
 .vc-click-scroll .vc-range::-webkit-slider-runnable-track { height: 18px; background: linear-gradient(90deg, #fafafa 0 46%, #e8e8e8 46% 54%, #fafafa 54%); }
 .vc-click-scroll .vc-range::-webkit-slider-thumb { width: 7px; height: 18px; margin-top: 0; appearance: none; -webkit-appearance: none; background: #fff; border: 1px solid #aeb2b9; }
-.vc-select { grid-row: 3; justify-self: center; width: 17px; height: 17px; margin: 0; accent-color: #00b8ff; }
+
+/* Keep the controls within the same centered frame as the plots. */
+.toolbar { max-width: 1450px; margin-inline: auto; padding-inline: 60px; }
+dialog { border: 3px solid #a4a4a4 !important; box-shadow: 0 0 0 1px #444, 0 14px 45px #000b; }
+#stimuli { width: min(520px, 94vw); height: min(590px, calc(100vh - 84px)); max-height: calc(100vh - 84px); overflow-x: hidden; }
+#stimuli .dialog-content h1 { font-size: 23px; }
+#stimuli .stimulus-cards h2 { font-size: 15px; }
+#stimuli .click-control output { font-size: 15px; }
+#stimuli .panel-footer button { font-size: 12px; }
+.membrane-sidebar .dialog-content { font-size: 18px; }
+.membrane-sidebar .hhsim-grid, .membrane-sidebar .two-column .setting-control, .membrane-sidebar .two-column .setting-text { font-size: 18px; }
+.membrane-sidebar .number { font-size: 16px; }
+.membrane-sidebar .panel-footer button { font-size: 13px; }
+#stimuli .stim-scroll-range::-webkit-slider-thumb, .vc-click-scroll .vc-range::-webkit-slider-thumb { background: #a5a5a5; }
+.vc-vertical-wrap::after, #stimuli .vertical-range-wrap::after { background: #a5a5a5; }
+
+/* Larger, readable drug controls without absolute positioning overlaps. */
+.drugs-dialog { width: min(580px, 94vw); height: auto; max-height: calc(100vh - 84px); overflow: auto; }
+.drugs-dialog .dialog-content { position: static; height: auto; min-height: 0; overflow: visible; padding: 12px 24px 18px; }
+.drugs-dialog .dialog-content h1 { position: static; width: auto; margin: 0 0 18px; font-size: 25px; }
+.drugs-dialog .drug, .drugs-dialog .pronase { position: static; width: 100%; margin: 0 0 22px; transform: none; }
+.drugs-dialog .drug h2, .drugs-dialog .pronase h2 { position: static; margin: 0 0 4px; font-size: 15px; }
+.drugs-dialog .drug-chart { height: 155px; }
+.drugs-dialog .apply-drug { font-size: 14px; }
+.drugs-dialog .drug > label { position: static; width: auto; margin: 4px 0 0; gap: 12px; font-size: 14px; font-weight: 700; }
+.drugs-dialog .drug > label .stepper { flex: 0 0 100px; height: 29px; grid-template-columns: minmax(0, 1fr) 20px; }
+.drugs-dialog .drug > label .number { height: 29px; font-size: 16px; }
+.drugs-dialog .drug > label .stepper button { width: 20px; font-size: 10px; line-height: 11px; }
+.drugs-dialog .pronase { min-height: 95px; text-align: center; }
+.drugs-dialog .pronase label { margin-top: 15px; font-size: 14px; }
+.drugs-dialog .panel-footer { position: static; margin: 0; }
+.vc-select { grid-row: 3; justify-self: center; width: 17px; height: 17px; margin: 0; accent-color: #f000de; }
+.vc-control.voltage .vc-select { grid-column: 1; grid-row: 4; }
 .vc-var-note { margin: 15px 0 0; color: #f000de; text-align: center; font-size: 12px; }
 .vc-var-input { display: grid; gap: 4px; width: 215px; margin: 65px 0 0; color: #e5e5e5; font-size: 11px; font-weight: 700; }
 .vc-var-input .number { height: 25px; padding: 3px; color: #f000de; border-width: 1px; font-size: 12px; text-align: left; }

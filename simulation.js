@@ -110,7 +110,7 @@ function restoreControls(snapshot) {
   updateDrugToolbarIndicator();
   updateMembrane();
   updateRatePlots();
-  Object.keys(doseCharts).forEach(updateDoseChart);
+  Object.keys(doseCharts).forEach((drug) => updateDoseChart(drug));
 }
 
 function snapshotRecallState(point, history, cursor = null) {
